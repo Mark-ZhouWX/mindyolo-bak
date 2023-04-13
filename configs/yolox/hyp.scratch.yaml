@@ -1,0 +1,21 @@
+optimizer:
+  optimizer: momentum
+
+
+loss:
+  name: YOLOv7Loss
+
+
+
+
+data:
+  num_parallel_workers: 4
+
+  train_transforms:
+    - {func_name: mosaic, prob: 1.0, mosaic9_prob: 0.2, translate: 0.2, scale: 0.9}
+
+
+  test_transforms:
+    - {func_name: letterbox, scaleup: False}
+
+
