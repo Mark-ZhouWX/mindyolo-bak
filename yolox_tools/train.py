@@ -23,7 +23,6 @@ from mindyolo.models.layers.yolox_blocks import use_syc_bn
 from yolox_tools.util import get_specified, get_param_groups, YOLOXCB, get_lr, load_weights, EvalCallback, DetectionEngine, \
     ResumeCallback, EvalWrapper
 from yolox_tools.ema import TrainOneStepWithEMA
-from mindyolo.models.losses.yolox_loss import YOLOLossCell
 from mindyolo.models.yolox import YOLOx
 from yolox_tools.yolox_dataset import create_yolox_dataset
 
