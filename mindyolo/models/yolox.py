@@ -6,22 +6,50 @@ from mindspore.ops import operations as P
 from mindyolo.models.layers.yolox_blocks import BaseConv
 from mindyolo.models.necks.pafpn import YOLOPAFPN
 
+__all__ = [
+    'YOLOx',
+    'yolox'
+]
+
+from mindyolo.models.registry import register_model
+
+
+def _cfg(url='', **kwargs):
+    return {
+        'url': url,
+        **kwargs
+    }
+
+
+default_cfgs = {
+    'yolox': _cfg(url='')
+}
+
 
 class YOLOx(nn.Cell):
     """ connect yolox backbone and head """
 
-    def __init__(self, config, backbone="yolopafpn"):
+    def __init__(self,
+                 backbone="yolopafpn",
+                 nc=80, # number of classes
+                 depth_wise=False,
+                 input_size=(640, 640),
+                 depth=0.33,
+                 width=0.50,
+                 stride=(8, 16, 32),
+                 **kwargs
+                 ):
         super(YOLOx, self).__init__()
-        self.num_classes = config.num_classes
+        self.num_classes = nc
         self.attr_num = self.num_classes + 5
-        self.depthwise = config.depth_wise
-        self.strides = Tensor([8, 16, 32], ms.float32)
-        self.input_size = config.input_size
+        self.depthwise = depth_wise
+        self.strides = Tensor(stride, ms.float32)
+        self.input_size = input_size
 
         # network
         if backbone == "yolopafpn":
-            self.depth = config.depth
-            self.width = config.width
+            self.depth = depth
+            self.width = width
             self.backbone = YOLOPAFPN(depth=self.depth, width=self.width, input_w=self.input_size[1], input_h=self.input_size[0])
             self.head_inchannels = [1024, 512, 256]
             self.activation = "silu"
@@ -71,7 +99,8 @@ class YOLOx(nn.Cell):
         outputs.append(output_l)
         outputs.append(output_m)
         outputs.append(output_s)
-        return P.Concat(axis=1)(outputs)  # batch_size, 8400, 85
+        outputs_cat = P.Concat(axis=1)(outputs)
+        return outputs_cat if self.training else (outputs_cat, 1)  # batch_size, 8400, 85
 
     def mapping_to_img(self, output, stride):
         """ map to origin image scale for each fpn """
@@ -189,3 +218,11 @@ class DetectionPerFPN(nn.Cell):
         obj_output = self.obj_preds(reg_feat)
 
         return cls_output, reg_output, obj_output
+
+
+@register_model
+def yolox(cfg, in_channels=3, num_classes=None, **kwargs) -> YOLOx:
+    """Get GoogLeNet model.
+     Refer to the base class `models.GoogLeNet` for more details."""
+    model = YOLOx(**cfg, **kwargs)
+    return model

@@ -1,6 +1,7 @@
 from .yolov3_loss import *
 from .yolov4_loss import *
 from .yolov5_loss import *
+from .yolox_loss import *
 from .yolov7_loss import *
 from .yolov8_loss import *
 from .loss_factory import *

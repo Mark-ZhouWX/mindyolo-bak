@@ -20,7 +20,7 @@ def set_seed(seed=2):
 
 def set_default(args):
     # Set Context
-    context.set_context(mode=args.ms_mode, device_target=args.device_target, max_call_depth=2000)
+    context.set_context(mode=args.ms_mode, device_target=args.device_target, max_call_depth=2000, pynative_synchronize=True)
     if args.device_target == "Ascend":
         device_id = int(os.getenv('DEVICE_ID', 0))
         context.set_context(device_id=device_id)

@@ -3,9 +3,9 @@
 data:
   dataset_name: coco
 
-  train_set: ./coco/train2017.txt  # 118287 images
-  val_set: ./coco/val2017.txt  # 5000 images
-  test_set: ./coco/test-dev2017.txt  # 20288 of 40670 images, submit to https://competitions.codalab.org/competitions/20794
+  train_set: /home/zhouwuxing/input/coco_yolo/train2017.txt  # 118287 images
+  val_set: /home/zhouwuxing/input/coco_yolo/val2017.txt  # 5000 images
+  test_set: /home/zhouwuxing/input/coco_yolo/test-dev2017.txt  # 20288 of 40670 images, submit to https://competitions.codalab.org/competitions/20794
 
   nc: 80
 

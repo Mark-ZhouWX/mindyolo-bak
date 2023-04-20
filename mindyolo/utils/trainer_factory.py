@@ -121,7 +121,7 @@ class Trainer:
                 s_step_time = time.time()
 
             # run eval per epoch on main device
-            if run_eval and (i + 1) % self.steps_per_epoch == 0:
+            if run_eval and (i + 1) % (50*self.steps_per_epoch) == 0:
                 s_eval_time = time.time()
                 sync_lock = os.path.join(sync_lock_dir, "/run_eval_sync.lock" + str(cur_epoch))
                 # single device run eval only

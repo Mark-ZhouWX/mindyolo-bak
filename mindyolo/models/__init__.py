@@ -19,6 +19,7 @@ from .layers import *
 from .losses import *
 from .yolov8 import *
 from .yolov7 import *
+from .yolox import *
 from .yolov5 import *
 from .yolov3 import *
 from .initializer import *
