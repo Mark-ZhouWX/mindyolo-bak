@@ -9,6 +9,8 @@ sync_bn: True
 ms_amp_level: O0
 keep_loss_fp32: True
 
+epochs: 285
+
 network:
   model_name: yolox
   backbone: yolopafpn
