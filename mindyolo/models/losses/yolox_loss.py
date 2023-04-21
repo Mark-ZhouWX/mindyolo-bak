@@ -97,6 +97,71 @@ class YOLOxLoss(nn.Cell):
         return anchor_center_pos, anchor_strides
 
 
+    def _get_foreground_new(self, gt_boxes, gt_valid_mask, center_radius=2.5):
+        """
+        get the mask of foreground anchor point,
+        ref: simOTA, link
+        Args:
+             gt_boxes (Tensor[bs, num_gt_max, 4]): gt box in [x1,y1, x2, y2] format, normed
+             gt_valid_mask (Tensor[bs, num_gt_max]) : gt box valid mask, indicates valid if true
+             num_valid_gt (int): num of valid gt boxes
+             center_radius (float): radius threshold to judge whether an anchor is an inlier of the gt center.
+                The unit is pixel in the feature map scale.
+        # TODO 根据megvii源码，fg_mask应当与in_center_box_mask对应，in_center_box_mask为落在核心框内，待验证
+        Returns:
+             fg_mask (Tensor(bs, num_total_anchor)): mask to indicate whether an anchor falls in any gt box
+             in_center_box_mask (Tensor(bs, num_gt_max, num_total_anchor)): mask to indicate whether an anchor
+                falls both in a specific gt box and the core box with radius center_radius
+
+        """
+        tl_index = Tensor([0, 1], mindspore.int32)
+        br_index = Tensor([2, 3], mindspore.int32)
+        bs, num_gt_max, _ = gt_boxes.shape
+        # gt_box_xyxy = box_cxcywh_to_xyxy(gt_boxes)
+        gt_box_xyxy = gt_boxes
+        # gt_box_center = 0.5 * (gt_box_xyxy[..., :2] + gt_box_xyxy[..., 2:])
+        gt_box_center = 0.5 * (ops.gather(gt_box_xyxy, tl_index, axis=-1) + ops.gather(gt_box_xyxy, br_index, axis=-1))
+        # 1. Gt box mask
+        # (bs, num_gt_max, num_total_anchor, 4)
+        # anchor_center_pos = mnp.tile(self.anchor_center_pos[None, None, :, :], reps=(bs, num_gt_max, 1, 1))  #
+        anchor_center_pos = mnp.tile(self.anchor_center_pos.expand_dims(0).expand_dims(0), reps=(bs, num_gt_max, 1, 1))  #
+
+        # (bs, num_gt_max, num_total_anchor, 2) -> (bs, num_gt_max, num_total_anchor)
+        expanded_gt_box_xyxy = gt_box_xyxy.expand_dims(2)
+        # in_box_mask = ops.concat([anchor_center_pos - gt_box_xyxy[:, :, None, :2],
+        #                 gt_box_xyxy[:, :, None, 2:] - anchor_center_pos], axis=-1).min(axis=-1) > 0
+        in_box_mask = ops.concat([anchor_center_pos - ops.gather(expanded_gt_box_xyxy, tl_index, axis=-1),
+                        ops.gather(expanded_gt_box_xyxy, br_index, axis=-1) - anchor_center_pos], axis=-1).min(axis=-1) > 0
+        fg_mask = in_box_mask.any(1)
+
+        # 2. Gt core box mask
+        # (bs, num_gt_max, num_total_anchor, 2)
+        # anchor_strides = mnp.tile(self.anchor_strides[None, None, :, :], reps=(bs, num_gt_max, 1, 1))  #
+        anchor_strides = mnp.tile(self.anchor_strides.expand_dims(0).expand_dims(0), reps=(bs, num_gt_max, 1, 1))  #
+        # gt_core_box_xyxy = ops.concat([gt_box_center[:, :, None, :] - 0.5 * center_radius * anchor_strides,
+        #                                gt_box_center[:, :, None, :] + 0.5 * center_radius * anchor_strides],
+        #                               axis=-1)
+        gt_core_box_xyxy = ops.concat([gt_box_center.expand_dims(2) - 0.5 * center_radius * anchor_strides,
+                                       gt_box_center.expand_dims(2) + 0.5 * center_radius * anchor_strides],
+                                      axis=-1)
+
+        # (bs, num_gt_max, num_total_anchor, 2) -> (bs, num_gt_max, num_total_anchor)
+        # in_center_mask = ops.concat([anchor_center_pos - gt_core_box_xyxy[..., :2],
+        #                           gt_core_box_xyxy[..., 2:] - anchor_center_pos], axis=-1).min(axis=-1) > 0
+        in_center_mask = ops.concat([anchor_center_pos - ops.gather(gt_core_box_xyxy, tl_index, axis=-1),
+                                  ops.gather(gt_core_box_xyxy, br_index, axis=-1) - anchor_center_pos], axis=-1).min(axis=-1) > 0
+
+        in_center_box_mask = ops.logical_and(in_box_mask, in_center_mask)
+
+        # 3. Fill padding pos with false (bs, num_gt_max, num_total_anchor)
+        # expanded_gt_valid_mask = ops.repeat_elements(gt_valid_mask[:, :, None].astype(mindspore.int32),
+        #                                              rep=self.num_total_anchor, axis=2).astype(mindspore.bool_)
+        expanded_gt_valid_mask = ops.repeat_elements(gt_valid_mask.expand_dims(2).astype(mindspore.int32),
+                                                     rep=self.num_total_anchor, axis=2).astype(mindspore.bool_)
+        in_center_box_mask = ops.logical_and(expanded_gt_valid_mask, in_center_box_mask)
+        pre_fg_mask = ops.logical_and(expanded_gt_valid_mask, in_box_mask.any(1, keep_dims=True))
+        return in_center_box_mask, pre_fg_mask
+
     def _get_foreground(self, gt_boxes, gt_valid_mask, center_radius=2.5):
         """
         get the mask of foreground anchor point,
@@ -115,6 +180,16 @@ class YOLOxLoss(nn.Cell):
 
         """
         bs, num_gt_max, _ = gt_boxes.shape
+
+        # # expanded_gt_valid_mask = ops.repeat_elements(gt_valid_mask[:, :, None].astype(mindspore.int32),
+        # #                                              rep=self.num_total_anchor, axis=2).astype(mindspore.bool_)
+        # in_center_box_mask, in_box_mask = ops.ones((bs, num_gt_max, self.num_total_anchor), mindspore.bool_), \
+        #                                     ops.ones((bs, num_gt_max, self.num_total_anchor), mindspore.bool_)
+        # # in_center_box_mask = ops.logical_and(expanded_gt_valid_mask, in_center_box_mask)
+        # # pre_fg_mask = ops.logical_and(expanded_gt_valid_mask, in_box_mask.any(1, keep_dims=True))
+        # return in_center_box_mask, in_box_mask
+
+
         # gt_box_xyxy = box_cxcywh_to_xyxy(gt_boxes)
         gt_box_xyxy = gt_boxes
         gt_box_center = 0.5 * (gt_box_xyxy[..., :2] + gt_box_xyxy[..., 2:])
@@ -141,12 +216,11 @@ class YOLOxLoss(nn.Cell):
         in_center_box_mask = ops.logical_and(in_box_mask, in_center_mask)
 
         # 3. Fill padding pos with false (bs, num_gt_max, num_total_anchor)
-        # import pdb; pdb.set_trace()
         expanded_gt_valid_mask = ops.repeat_elements(gt_valid_mask[:, :, None].astype(mindspore.int32),
                                                      rep=self.num_total_anchor, axis=2).astype(mindspore.bool_)
         in_center_box_mask = ops.logical_and(expanded_gt_valid_mask, in_center_box_mask)
         pre_fg_mask = ops.logical_and(expanded_gt_valid_mask, in_box_mask.any(1, keep_dims=True))
-        return fg_mask, in_center_box_mask, pre_fg_mask
+        return in_center_box_mask, pre_fg_mask
 
     def construct(self, preds, targets, imgs=None):
         """
@@ -155,14 +229,16 @@ class YOLOxLoss(nn.Cell):
             preds (Tensor[bs, num_total_anchor, 85]):
             targets (Tensor[bs, num_gt_max, 6]): 0: batch_id, 1: label, 2-6: box
         """
-        # TODO check default label 0,-1
+        # loss = (preds ** 2).mean()
+        # return loss, ops.stop_gradient(ops.stack((loss, Tensor(0.0), Tensor(0.0), Tensor(0.0), Tensor(0.0))))
+        #
         gt_valid_mask = targets[..., 1] >= 0  # defalut class column
         gt_box_xyxy = box_cxcywh_to_xyxy(targets[:, :, 2:]) # (batch_size, gt_max, 4) in [xyxy] format
         # reverse norm
         gt_box_xyxy_raw = box_clip(box_scale(gt_box_xyxy, self.input_size), self.input_size)
         # to cxcywh format
         bbox_true = box_xyxy_to_cxcywh(gt_box_xyxy_raw)
-        fg_mask, is_inbox_and_incenter, pre_fg_mask = self._get_foreground(gt_box_xyxy_raw, gt_valid_mask)
+        is_inbox_and_incenter, pre_fg_mask = self._get_foreground(gt_box_xyxy_raw, gt_valid_mask)
 
         batch_size = P.Shape()(preds)[0]
         gt_max = P.Shape()(targets)[1]
