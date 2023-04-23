@@ -18,10 +18,35 @@ def create_lr_scheduler(lr_init, lr_scheduler=None, **kwargs):
     """
 
     if lr_scheduler:
-        # TODO: Add common lr_scheduler
-        raise NotImplementedError(f"Not support lr_scheduler: {lr_scheduler}")
+        assert isinstance(lr_scheduler, str), f'lr_scheduler should be a string, but got {type(lr_scheduler)}'
+        if lr_scheduler == "yolox":
+            return create_yolox_lr_scheduler(lr_init=lr_init, **kwargs)
     else:
         return lr_init
+
+
+def create_yolox_lr_scheduler(start_factor, end_factor, lr_init, steps_per_epoch, warmup_epochs, epochs, **kwargs):
+    # quadratic
+    lrs_qua = quadratic_lr(0.01, start_factor, lr_init, steps_per_epoch, epochs=warmup_epochs)
+    # cosine
+    cosine_epochs = epochs - warmup_epochs
+    lrs_cos = cosine_decay_lr(start_factor, end_factor, lr_init, steps_per_epoch, epochs=cosine_epochs)
+    lrs = lrs_qua + lrs_cos
+    return lrs
+
+
+def quadratic_lr(start_factor, end_factor, lr_init, steps_per_epoch, epochs, t_max=None, **kwargs):
+    if t_max is None:
+        t_max = epochs
+    lrs = []
+    start_lr = lr_init * start_factor
+    end_lr = lr_init * end_factor
+    for i in range(steps_per_epoch * epochs):
+        epoch_idx = i // steps_per_epoch
+        multiplier = min(epoch_idx + 1, t_max) / t_max
+        multiplier = pow(multiplier, 2)
+        lrs.append(start_lr + multiplier * (end_lr - start_lr))
+    return lrs
 
 
 def create_warmup_momentum_scheduler(steps_per_epoch, momentum=None, warmup_momentum=None,
