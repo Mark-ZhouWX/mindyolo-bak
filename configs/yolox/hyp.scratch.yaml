@@ -1,7 +1,7 @@
 optimizer:  # TODO align with yolox official
   optimizer: momentum
   lr_init: 0.01  # initial learning rate (SGD=1E-2, Adam=1E-3)
-  lr_scheduler: yolox
+#  lr_scheduler: yolox
   momentum: 0.937  # SGD momentum/Adam beta1
   nesterov: True # update gradients with NAG(Nesterov Accelerated Gradient) algorithm
   loss_scale: 1.0 # loss scale for optimizer
