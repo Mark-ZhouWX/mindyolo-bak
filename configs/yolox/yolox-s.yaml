@@ -3,6 +3,19 @@ __BASE__: [
   './hyp.scratch.yaml',
 ]
 
+optimizer:
+
+  lr_init: 0.01  # initial learning rate (SGD=1E-2, Adam=1E-3)
+  lr_scheduler: yolox  # quadratic warmup + cosi[ne decay
+  start_factor: 1.0
+  end_factor: 0.05
+
+  warmup_epochs: 5  # warmup epochs (fractions ok)
+  warmup_momentum: 0.8  # warmup initial momentum
+  warmup_bias_lr: 0.1  # warmup initial bias lr
+  min_warmup_step: 1000 # minimum warmup step
+
+
 per_batch_size: 8  # 8 * 8 = 64
 img_size: 640
 sync_bn: True

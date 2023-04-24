@@ -1,7 +1,6 @@
 __BASE__: [
   '../coco.yaml',
   './hyp.scratch.yaml',
-  './yolox-s.yaml'
 ]
 
 weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.19-09:03:59/weights/yolox-s-49_1848.ckpt
@@ -9,6 +8,7 @@ ema_weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.19-09:03:59/weights/
 
 optimizer:
   checkpoint_path: /home/zhouwuxing/projects/mindyolo/runs/2023.04.19-09:03:59/weights/optim_yolox-s.ckpt
+  lr_init: 0.0005  # fix learning rate of the 2nd part of training, equals to 1st lr_init * end_factor 0.01*0.05
 
 epochs: 15
 
@@ -25,3 +25,24 @@ data:
     - {func_name: label_pad, padding_size: 160, padding_value: -1}
     - {func_name: image_norm, scale: 255.}
     - {func_name: image_transpose, bgr2rgb: True, hwc2chw: True}
+
+
+# below are the same as yolox-s.yaml
+
+per_batch_size: 8  # 8 * 8 = 64
+img_size: 640
+sync_bn: True
+ms_amp_level: O0
+keep_loss_fp32: True
+
+
+network:
+  model_name: yolox
+  backbone: yolopafpn
+  num_classes: 80
+  depth_wise: False
+  input_size: [640, 640]
+  depth: 0.33
+  width: 0.50
+  stride: [8, 16, 32]
+  anchors: []

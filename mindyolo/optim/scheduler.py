@@ -43,7 +43,7 @@ def quadratic_lr(start_factor, end_factor, lr_init, steps_per_epoch, epochs, t_m
     end_lr = lr_init * end_factor
     for i in range(steps_per_epoch * epochs):
         epoch_idx = i // steps_per_epoch
-        multiplier = min(epoch_idx + 1, t_max) / t_max
+        multiplier = min(epoch_idx, t_max) / t_max
         multiplier = pow(multiplier, 2)
         lrs.append(start_lr + multiplier * (end_lr - start_lr))
     return lrs
