@@ -32,7 +32,9 @@ def parse_args(parser):
     args = parser.parse_args(remaining)
 
     print("parse_args:")
-    pprint(args)
+    # pprint(args)
+    for arg in vars(args):
+        print(format(arg, '<30'), format(str(getattr(args, arg)), '<'))  # str, arg_type
     print("Please check the above information for the configurations", flush=True)
 
     return args
