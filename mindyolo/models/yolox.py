@@ -1,8 +1,12 @@
+import math
+
 import mindspore as ms
 from mindspore import nn, Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-
+# from mindspore.common import initializer as init
+#
+# from .initializer import initialize_defult
 from mindyolo.models.layers.yolox_blocks import BaseConv
 from mindyolo.models.necks.pafpn import YOLOPAFPN
 
@@ -66,6 +70,7 @@ class YOLOx(nn.Cell):
                                       act=self.activation, width=self.width)
         self.head_s = DetectionPerFPN(in_channels=self.head_inchannels, num_classes=self.num_classes, scale='s',
                                       act=self.activation, width=self.width)
+        # self.reset_parameter()
 
     def construct(self, x):
         """ forward """
@@ -133,6 +138,15 @@ class YOLOx(nn.Cell):
         output_other = output[..., 4:]
         output_t = P.Concat(axis=-1)([output_xy, output_wh, output_other])
         return output_t  # bs, 6400, 85           grid(1, 6400, 2)
+
+    # def reset_parameter(self):
+    #     # init default
+    #     initialize_defult(self)
+    #
+    #     # reset parameter for Detect Head
+    #     for _, cell in self.cells_and_names():
+    #         if isinstance(cell, DetectionPerFPN):
+    #             cell.initialize_biases()
 
 
 class DetectionPerFPN(nn.Cell):
@@ -219,6 +233,10 @@ class DetectionPerFPN(nn.Cell):
 
         return cls_output, reg_output, obj_output
 
+    # def initialize_biases(self, prior_prob=1e-2):
+    #     for cell in [self.cls_preds, self.obj_preds]:
+    #         cell.bias.set_data(init.initializer(-math.log((1 - prior_prob) / prior_prob), cell.bias.shape,
+    #                                             cell.bias.dtype))
 
 @register_model
 def yolox(cfg, in_channels=3, num_classes=None, **kwargs) -> YOLOx:
