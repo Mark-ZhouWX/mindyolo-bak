@@ -4,15 +4,23 @@ __BASE__: [
   './yolox-s-2nd.yaml'
 ]
 
+# difference with 2nd training of s
+# 1. img_size is 416
+# 2. depthwise is true
+# 3. depth and width
+
 weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/yolox-s-285_1848.ckpt
 ema_weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/EMA_yolox-s-285_1848.ckpt
 
 optimizer:
   checkpoint_path: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/optim_yolox-s.ckpt
 
+img_size: [416, 416]
+
+loss:
+   input_size: [416, 416]
+
 network:
-  depth: 1.0
-  width: 1.0
-  backbone: yolofpn
-
-
+  depth: 0.33
+  width: 0.25
+  depth_wise: True

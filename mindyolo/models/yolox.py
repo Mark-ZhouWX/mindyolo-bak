@@ -7,7 +7,7 @@ from mindspore.ops import operations as P
 from mindspore.common import initializer as init
 
 from .initializer import initialize_defult
-from mindyolo.models.layers.yolox_blocks import BaseConv
+from mindyolo.models.layers.yolox_blocks import BaseConv, DWConv
 from mindyolo.models.necks.pafpn import YOLOPAFPN
 
 __all__ = [
@@ -54,7 +54,8 @@ class YOLOx(nn.Cell):
         if backbone == "yolopafpn":
             self.depth = depth
             self.width = width
-            self.backbone = YOLOPAFPN(depth=self.depth, width=self.width, input_w=self.input_size[1], input_h=self.input_size[0])
+            self.backbone = YOLOPAFPN(depth=self.depth, width=self.width, input_w=self.input_size[1], input_h=self.input_size[0],
+                                      depthwise=self.depthwise)
             self.head_inchannels = [1024, 512, 256]
             self.activation = "silu"
 
@@ -65,11 +66,11 @@ class YOLOx(nn.Cell):
             self.width = 1.0
 
         self.head_l = DetectionPerFPN(in_channels=self.head_inchannels, num_classes=self.num_classes, scale='l',
-                                      act=self.activation, width=self.width)
+                                      act=self.activation, width=self.width, depthwise=self.depthwise)
         self.head_m = DetectionPerFPN(in_channels=self.head_inchannels, num_classes=self.num_classes, scale='m',
-                                      act=self.activation, width=self.width)
+                                      act=self.activation, width=self.width, depthwise=self.depthwise)
         self.head_s = DetectionPerFPN(in_channels=self.head_inchannels, num_classes=self.num_classes, scale='s',
-                                      act=self.activation, width=self.width)
+                                      act=self.activation, width=self.width, depthwise=self.depthwise)
         self.reset_parameter()
 
     def construct(self, x):
@@ -152,13 +153,13 @@ class YOLOx(nn.Cell):
 class DetectionPerFPN(nn.Cell):
     """ head  """
     # FIXME rename to YOLOxDecoupleHead
-    def __init__(self, num_classes, scale, in_channels=None, act="silu", width=1.0):
+    def __init__(self, num_classes, scale, in_channels=None, act="silu", width=1.0, depthwise=False):
         super(DetectionPerFPN, self).__init__()
         if in_channels is None:
             in_channels = [1024, 512, 256]
         self.scale = scale
         self.num_classes = num_classes
-        Conv = BaseConv
+        Conv = DWConv if depthwise else BaseConv
         if scale == 's':
             self.stem = BaseConv(in_channels=int(in_channels[0] * width), out_channels=int(256 * width), ksize=1,
                                  stride=1, act=act)
