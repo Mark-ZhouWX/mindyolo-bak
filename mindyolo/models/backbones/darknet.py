@@ -1,6 +1,6 @@
 from mindspore import nn
 
-from mindyolo.models.layers.yolox_blocks import DWConv, BaseConv, Focus, CSPLayer, SPPBottleneck
+from mindyolo.models.layers.yolox_blocks import DWConv, BaseConv, Focus, CSPLayer, SPPBottleneck, ResLayer
 
 
 class Darknet(nn.Cell):

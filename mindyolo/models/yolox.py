@@ -9,6 +9,7 @@ from mindspore.common import initializer as init
 from .initializer import initialize_defult
 from mindyolo.models.layers.yolox_blocks import BaseConv, DWConv
 from mindyolo.models.necks.pafpn import YOLOPAFPN
+from mindyolo.models.necks.fpn import YOLOFPN
 
 __all__ = [
     'YOLOx',
