@@ -21,7 +21,7 @@ iou_thres: 0.65
 
 
 data:
-  num_parallel_workers: 8
+  num_parallel_workers: 4
 
   train_transforms:
     - {func_name: mosaic, prob: 1.0, mosaic9_prob: 0.0, translate: 0.1, scale: 0.9, degrees: 10.0, shear: 2.0}

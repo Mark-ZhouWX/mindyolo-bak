@@ -15,7 +15,7 @@ ema_weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/
 optimizer:
   checkpoint_path: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/optim_yolox-s.ckpt
 
-img_size: [416, 416]
+img_size: 416
 
 loss:
    input_size: [416, 416]
@@ -24,3 +24,4 @@ network:
   depth: 0.33
   width: 0.25
   depth_wise: True
+  input_size: [416, 416]
