@@ -8,11 +8,11 @@ __BASE__: [
 # 1. img_size
 # 2. depth and width
 
-weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/yolox-s-285_1848.ckpt
-ema_weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/EMA_yolox-s-285_1848.ckpt
+weight: /home/zhouwuxing/projects/mindyolo/runs/2023.05.06-08:41:58/weights/yolox-tiny-285_1848.ckpt
+ema_weight: /home/zhouwuxing/projects/mindyolo/runs/2023.05.06-08:41:58/weights/EMA_yolox-tiny-285_1848.ckpt
 
 optimizer:
-  checkpoint_path: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/optim_yolox-s.ckpt
+  checkpoint_path: /home/zhouwuxing/projects/mindyolo/runs/2023.05.06-08:41:58/weights/optim_yolox-tiny.ckpt
 
 img_size: 416
 
