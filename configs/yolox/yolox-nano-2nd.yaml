@@ -9,11 +9,11 @@ __BASE__: [
 # 2. depthwise is true
 # 3. depth and width
 
-weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/yolox-s-285_1848.ckpt
-ema_weight: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/EMA_yolox-s-285_1848.ckpt
+weight: /home/zhouwuxing/projects/mindyolo/runs/2023.05.08-05:18:55/weights/yolox-nano-285_1848.ckpt
+ema_weight: /home/zhouwuxing/projects/mindyolo/runs/2023.05.08-05:18:55/weights/EMA_yolox-nano-285_1848.ckpt
 
 optimizer:
-  checkpoint_path: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/optim_yolox-s.ckpt
+  checkpoint_path: /home/zhouwuxing/projects/mindyolo/runs/2023.05.08-05:18:55/weights/optim_yolox-nano.ckpt
 
 img_size: 416
 
