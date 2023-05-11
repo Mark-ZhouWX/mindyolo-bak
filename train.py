@@ -10,7 +10,7 @@ from mindyolo.models import create_loss, create_model
 from mindyolo.optim import create_group_param, create_lr_scheduler, create_warmup_momentum_scheduler, \
     create_optimizer, EMA
 from mindyolo.utils import logger
-from mindyolo.utils.config import parse_args
+from mindyolo.utils.config import parse_args, config_format_func
 from mindyolo.utils.utils import set_seed, set_default, load_pretrain, freeze_layers
 from mindyolo.utils.train_step_factory import get_gradreducer, get_loss_scaler, create_train_step_fn
 from mindyolo.utils.trainer_factory import create_trainer
@@ -86,6 +86,11 @@ def train(args):
     set_seed(args.seed)
     set_default(args)
     main_device = (args.rank % args.rank_size == 0)
+
+    if main_device:
+        print("parse_args:")
+        print(config_format_func(args))
+        print("Please check the above information for the configurations", flush=True)
 
     # Create Network
     args.network.recompute = args.recompute
