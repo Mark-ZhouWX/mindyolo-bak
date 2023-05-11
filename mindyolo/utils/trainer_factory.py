@@ -1,4 +1,5 @@
 import os
+import pathlib
 import types
 import time
 from typing import Union
@@ -59,6 +60,7 @@ class Trainer:
             overflow_still_update: bool = False,
             keep_checkpoint_max: int = 10,
             log_interval: int = 1,
+            eval_interval: int = 1,
             loss_item_name: list = [],
             save_dir: str = '',
             enable_modelarts: bool = False,
@@ -70,6 +72,7 @@ class Trainer:
         self.epochs = epochs
         self.main_device = main_device
         self.log_interval = log_interval
+        self.eval_interval = eval_interval
         self.overflow_still_update = overflow_still_update
         self.loss_item_name = loss_item_name
 
@@ -125,9 +128,9 @@ class Trainer:
                 s_step_time = time.time()
 
             # run eval per epoch on main device
-            if run_eval and (i + 1) % (50*self.steps_per_epoch) == 0:
+            if run_eval and (i + 1) % (self.eval_interval * self.steps_per_epoch) == 0:
                 s_eval_time = time.time()
-                sync_lock = os.path.join(sync_lock_dir, "/run_eval_sync.lock" + str(cur_epoch))
+                sync_lock = os.path.join(sync_lock_dir, "run_eval_sync.lock." + str(cur_epoch))
                 # single device run eval only
                 if self.main_device and not os.path.exists(sync_lock):
                     eval_network = self.ema.ema if self.ema else self.network
@@ -138,16 +141,14 @@ class Trainer:
                     eval_network.set_train(_train_status)
 
                     save_path_best = os.path.join(ckpt_save_dir,
-                                                  f"best/{self.model_name}-{cur_epoch}_{self.steps_per_epoch}"
+                                                  f"best_{self.model_name}-{cur_epoch}_{self.steps_per_epoch}"
                                                   f"_acc{accuracy:.2f}.ckpt")
                     ckpt_filelist_best = manager_best.save_ckpoint(eval_network, num_ckpt=keep_checkpoint_max,
                                                                    metric=accuracy, save_path=save_path_best)
                     logger.info(f"Epoch {cur_epoch}/{epochs}, eval accuracy: {accuracy:.2f}, "
                                 f"run_eval time: {(time.time() - s_eval_time):.2f} s.")
-                    try:
-                        os.mknod(sync_lock)
-                    except IOError:
-                        pass
+
+                    pathlib.Path(sync_lock).touch()
                 # other device wait for lock sign
                 while True:
                     if os.path.exists(sync_lock):

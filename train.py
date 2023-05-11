@@ -51,6 +51,7 @@ def get_parser_train(parents=None):
                         help='grad accumulate step, recommended when batch-size is less than 64')
     parser.add_argument('--auto_accumulate', type=ast.literal_eval, default=False, help='auto accumulate')
     parser.add_argument('--log_interval', type=int, default=100, help='log interval')
+    parser.add_argument('--eval_interval', type=int, default=1, help='eval interval')
     parser.add_argument('--single_cls', type=ast.literal_eval, default=False,
                         help='train multi-class data as single-class')
     parser.add_argument('--sync_bn', type=ast.literal_eval, default=False,
@@ -231,6 +232,7 @@ def train(args):
             overflow_still_update=args.overflow_still_update,
             keep_checkpoint_max=args.keep_checkpoint_max,
             log_interval=args.log_interval,
+            eval_interval=args.eval_interval,
             loss_item_name=[] if not hasattr(loss_fn, 'loss_item_name') else loss_fn.loss_item_name,
             save_dir=args.save_dir,
             enable_modelarts=args.enable_modelarts,
