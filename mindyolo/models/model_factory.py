@@ -92,7 +92,9 @@ def parse_model(d, ch, nc, sync_bn=False):  # model_dict, input_channels(3)
     _SYNC_BN = sync_bn
     if _SYNC_BN:
         logger.info('Parse model with Sync BN.')
-    # logger.info('\n%3s%18s%3s%10s  %-40s%-30s' % ('', 'from', 'n', 'params', 'module', 'arguments'))  # print detail
+    logger.info('')
+    logger.info('network structure are as follows')
+    logger.info('%3s%18s%3s%10s  %-70s%-30s' % ('', 'from', 'n', 'params', 'module', 'arguments'))
     anchors, reg_max = d.get('anchors', 1), d.get('reg_max', 16)
     stride, gd, gw = d.stride, d.depth_multiple, d.width_multiple
     na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
@@ -144,7 +146,7 @@ def parse_model(d, ch, nc, sync_bn=False):  # model_dict, input_channels(3)
         np = sum([x.size for x in m_.get_parameters()])  # number params
         m_.i, m_.f, m_.type, m_.np = i, f, t, np  # attach index, 'from' index, type, number params
         layers_param.append((i, f, t, np))
-        # logger.info('%3s%18s%3s%10.0f  %-40s%-30s' % (i, f, n, np, t, args))  # print detail
+        logger.info('%3s%18s%3s%10.0f  %-70s%-30s' % (i, f, n, np, t, args))  # print
         save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
         layers.append(m_)
         if i == 0:

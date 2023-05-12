@@ -87,10 +87,9 @@ def train(args):
     set_default(args)
     main_device = (args.rank % args.rank_size == 0)
 
-    if main_device:
-        print("parse_args:")
-        print(config_format_func(args))
-        print("Please check the above information for the configurations", flush=True)
+    logger.info("parse_args:")
+    logger.info('\n' + config_format_func(args))
+    logger.info("Please check the above information for the configurations")
 
     # Create Network
     args.network.recompute = args.recompute

@@ -2,6 +2,7 @@ import math
 
 import mindspore as ms
 from mindspore import nn, ops, Tensor
+from mindspore import numpy as mnp
 from mindspore.common import initializer as init
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -72,32 +73,34 @@ class YOLOxHead(nn.Cell):
 
     def convert_to_origin_scale(self, output, stride):
         """ map to origin image scale for each fpn """
-        # TODO use ops, _make_grid, move stride tensor to init
-        batch_size = P.Shape()(output)[0]
-        grid_size = P.Shape()(output)[2:4]
-        range_x = range(grid_size[1])
-        range_y = range(grid_size[0])
-        stride = P.Cast()(stride, output.dtype)
-        grid_x = P.Cast()(F.tuple_to_array(range_x), output.dtype)
-        grid_y = P.Cast()(F.tuple_to_array(range_y), output.dtype)
-        grid_y = P.ExpandDims()(grid_y, 1)
-        grid_x = P.ExpandDims()(grid_x, 0)
-        yv = P.Tile()(grid_y, (1, grid_size[1]))
-        xv = P.Tile()(grid_x, (grid_size[0], 1))
-        grid = P.Stack(axis=2)([xv, yv])  # (80, 80, 2)
-        grid = P.Reshape()(grid, (1, 1, grid_size[0], grid_size[1], 2))  # (1,1,80,80,2)
-        output = P.Reshape()(output,
-                             (batch_size, self.no, grid_size[0], grid_size[1]))  # bs, 6400, 85-->(bs,85,80,80)
-        output = P.Transpose()(output, (0, 2, 1, 3))  # (bs,85,80,80)-->(bs,80,85,80)
-        output = P.Transpose()(output, (0, 1, 3, 2))  # (bs,80,85,80)--->(bs, 80, 80, 85)
-        output = P.Reshape()(output, (batch_size, 1 * grid_size[0] * grid_size[1], -1))  # bs, 6400, 85
-        grid = P.Reshape()(grid, (1, -1, 2))  # grid(1, 6400, 2)
+        batch_size = ops.shape(output)[0]
+        grid_size = ops.shape(output)[2:4]
+        stride = ops.cast(stride, output.dtype)
 
-        # reconstruct
+        # reshape predictions
+        output = ops.transpose(output, (0, 2, 3, 1))  # (bs,85,80,80)-->(bs, 80, 80, 85)
+        output = ops.reshape(output, (batch_size, 1 * grid_size[0] * grid_size[1], -1))  # bs, 6400, 85
+
+        # make grid
+        grid = self._make_grid(nx=grid_size[1], ny=grid_size[0], dtype=output.dtype)  # (1,1,80,80,2)
+        grid = ops.reshape(grid, (1, -1, 2))  # grid(1, 6400, 2)
+
+        # feature map scale to origin scale
         output_xy = output[..., :2]
         output_xy = (output_xy + grid) * stride
         output_wh = output[..., 2:4]
-        output_wh = P.Exp()(output_wh) * stride
+        output_wh = ops.exp(output_wh) * stride
         output_other = output[..., 4:]
-        output_t = P.Concat(axis=-1)([output_xy, output_wh, output_other])
+        output_t = ops.concat([output_xy, output_wh, output_other], -1)
         return output_t  # bs, 6400, 85
+
+    @staticmethod
+    def _make_grid(nx=20, ny=20, dtype=ms.float32):
+        # meshgrid is not supported on a specific model of machine
+        # an alternative solution is adopted, which will be updated later
+        x = mnp.arange(nx).astype(ms.int32)
+        y = mnp.arange(ny).astype(ms.int32)
+        xv = ops.tile(x.reshape(1, nx), (ny, 1))
+        yv = ops.tile(y.reshape(ny, 1), (1, nx))
+        #xv, yv = ops.meshgrid((mnp.arange(nx), mnp.arange(ny)))
+        return ops.cast(ops.stack((xv, yv), 2).view((1, 1, ny, nx, 2)), dtype)
