@@ -6,8 +6,6 @@ optimizer:  # TODO align with yolox official
   group_param: filter_bias_and_bn # group param strategy
   gp_weight_decay: 0.0005  # group param weight decay 5e-4
 
-img_size: [640, 640]
-
 loss:
    name: YOLOxLoss
    input_size: [640, 640]
@@ -19,6 +17,11 @@ loss:
 conf_thres: 0.001  # FIXME align with yolox official 0.01
 iou_thres: 0.65
 
+per_batch_size: 8  # 8 * 8 = 64
+img_size: 640
+sync_bn: False
+ms_amp_level: O0
+keep_loss_fp32: True
 
 data:
   num_parallel_workers: 4

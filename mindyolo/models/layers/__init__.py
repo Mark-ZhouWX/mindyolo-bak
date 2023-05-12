@@ -10,7 +10,7 @@ from .upsample import *
 
 __all__ = ['Swish',
            'Shortcut', 'Concat', 'ReOrg', 'Identity', 'DFL',
-           'ConvNormAct', 'RepConv', 'DownC',
+           'ConvNormAct', 'RepConv', 'DownC', 'Focus',
            'Bottleneck', 'C3', 'C2f',
            'ImplicitA', 'ImplicitM',
            'MP', 'SP', 'MaxPool2d',

@@ -5,5 +5,5 @@ __BASE__: [
 ]
 
 network:
-  depth: 0.67
-  width: 0.75
+  depth_multiple: 0.67
+  width_multiple: 0.75

@@ -11,5 +11,5 @@ optimizer:
   checkpoint_path: /home/zhouwuxing/projects/mindyolo/runs/2023.04.24-09:35:19/weights/optim_yolox-s.ckpt
 
 network:
-  depth: 0.67
-  width: 0.75
+  depth_multiple: 0.67
+  width_multiple: 0.75

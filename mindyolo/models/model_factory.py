@@ -110,7 +110,7 @@ def parse_model(d, ch, nc, sync_bn=False):  # model_dict, input_channels(3)
                 pass
 
         n = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in (nn.Conv2d, ConvNormAct, RepConv, DownC, SPPCSPC, SPPF, C3, C2f, Bottleneck, Residualblock):
+        if m in (nn.Conv2d, ConvNormAct, RepConv, DownC, SPPCSPC, SPPF, C3, C2f, Bottleneck, Residualblock, Focus):
             c1, c2 = ch[f], args[0]
             if c2 != no:  # if not output
                 c2 = math.ceil(c2 * gw / 8) * 8

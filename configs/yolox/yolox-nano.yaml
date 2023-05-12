@@ -11,14 +11,14 @@ __BASE__: [
 # 4. multiscale range (random_size) is (10, 20)
 # 5. depth and width
 
-img_size: 416  # FIXME try to make mindyolo support list
+img_size: 416
 
 loss:
    input_size: [416, 416]
 
 network:
-  depth: 0.33
-  width: 0.25
+  depth_multiple: 0.33
+  width_multiple: 0.25
   depth_wise: True
   input_size: [416, 416]
 

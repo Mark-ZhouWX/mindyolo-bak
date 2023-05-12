@@ -16,9 +16,8 @@ loss:
    input_size: [416, 416]
 
 network:
-  depth: 0.33
-  width: 0.375
-  input_size: [416, 416]
+  depth_multiple: 0.33
+  width_multiple: 0.375
 
 data:
 

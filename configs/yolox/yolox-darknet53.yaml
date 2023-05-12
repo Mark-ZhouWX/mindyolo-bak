@@ -9,8 +9,8 @@ __BASE__: [
 # 2. depth and width
 
 network:
-  depth: 1.0
-  width: 1.0
+  depth_multiple: 1.0
+  width_multiple: 1.0
   backbone: yolofpn
 
 
