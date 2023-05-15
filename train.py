@@ -100,6 +100,11 @@ def train(args):
         num_classes=args.data.nc,
         sync_bn=args.sync_bn,
     )
+
+    num_train_params = sum([x.size for x in network.trainable_params()])
+    num_total_params = sum([x.size for x in network.get_parameters()])
+    logger.info(f"number of network params, total: {num_total_params/1e6}M, trainable: {num_train_params/1e6}M")
+
     if args.ema and main_device:
         ema_network = create_model(
             model_name=args.network.model_name,

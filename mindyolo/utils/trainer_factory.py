@@ -142,11 +142,11 @@ class Trainer:
 
                     save_path_best = os.path.join(ckpt_save_dir,
                                                   f"best_{self.model_name}-{cur_epoch}_{self.steps_per_epoch}"
-                                                  f"_acc{accuracy:.2f}.ckpt")
+                                                  f"_acc{accuracy:.3f}.ckpt")
                     ckpt_filelist_best = manager_best.save_ckpoint(eval_network, num_ckpt=keep_checkpoint_max,
                                                                    metric=accuracy, save_path=save_path_best)
-                    logger.info(f"Epoch {cur_epoch}/{epochs}, eval accuracy: {accuracy:.2f}, "
-                                f"run_eval time: {(time.time() - s_eval_time):.2f} s.")
+                    logger.info(f"Epoch {cur_epoch}/{epochs}, eval accuracy: {accuracy:.3f}, "
+                                f"run_eval time: {(time.time() - s_eval_time):.3f} s.")
 
                     pathlib.Path(sync_lock).touch()
                 # other device wait for lock sign

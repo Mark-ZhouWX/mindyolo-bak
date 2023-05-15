@@ -11,7 +11,12 @@ from mindyolo.models.layers.conv import ConvNormAct
 
 
 class YOLOxHead(nn.Cell):
-    def __init__(self, nc=80, stride=(8, 16, 32), ch=(256, 512, 1024), act=True, sync_bn=False):
+    def __init__(self, nc=80, stride=(8, 16, 32), is_standard_backbone=True, ch=(256, 512, 1024),  act=True, sync_bn=False):
+        """
+        YOlOx head
+        Args:
+            is_standard_backbone: whether the predecessor backbone is a standard one or darknet53. default, True
+        """
         super().__init__()
         assert isinstance(stride, (tuple, list)) and len(stride) > 0
         assert isinstance(ch, (tuple, list)) and len(ch) > 0
@@ -28,9 +33,9 @@ class YOLOxHead(nn.Cell):
         self.reg_preds = nn.CellList()
         self.obj_preds = nn.CellList()
 
-        hidden_ch = ch[2]//4
+        hidden_ch = ch[2]//4 if is_standard_backbone else 256
         for i in range(self.nl):  # three kind of resolution, 80, 40, 20
-            self.stems.append(ConvNormAct(ch[i], hidden_ch, 3, act=act, sync_bn=sync_bn))
+            self.stems.append(ConvNormAct(ch[i], hidden_ch, 1, act=act, sync_bn=sync_bn))
             self.cls_convs.append(nn.SequentialCell(
                 [ConvNormAct(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn),
                  ConvNormAct(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn)]
