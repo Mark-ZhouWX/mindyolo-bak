@@ -121,7 +121,6 @@ class YOLOxLoss(nn.Cell):
              num_valid_gt (int): num of valid gt boxes
              center_radius (float): radius threshold to judge whether an anchor is an inlier of the gt center.
                 The unit is pixel in the feature map scale.
-        # TODO 根据megvii源码，fg_mask应当与in_center_box_mask对应，in_center_box_mask为落在核心框内，待验证
         Returns:
              fg_mask (Tensor(bs, num_total_anchor)): mask to indicate whether an anchor falls in any gt box
              in_center_box_mask (Tensor(bs, num_gt_max, num_total_anchor)): mask to indicate whether an anchor
