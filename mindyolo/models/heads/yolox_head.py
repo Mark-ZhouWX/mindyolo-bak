@@ -7,7 +7,7 @@ from mindspore.common import initializer as init
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
-from mindyolo.models.layers.conv import ConvNormAct, DwConvNormAct
+from mindyolo.models.layers.conv import ConvNormAct, DWConvNormAct
 
 
 class YOLOxHead(nn.Cell):
@@ -35,7 +35,7 @@ class YOLOxHead(nn.Cell):
         self.obj_preds = nn.CellList()
 
         hidden_ch = ch[2]//4 if is_standard_backbone else 256
-        HeadCNA = DwConvNormAct if depth_wise else ConvNormAct
+        HeadCNA = DWConvNormAct if depth_wise else ConvNormAct
         for i in range(self.nl):  # three kind of resolution, 80, 40, 20
             self.stems.append(ConvNormAct(ch[i], hidden_ch, 1, act=act, sync_bn=sync_bn))
             self.cls_convs.append(nn.SequentialCell(

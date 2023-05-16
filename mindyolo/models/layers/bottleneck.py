@@ -1,6 +1,6 @@
 from mindspore import nn, ops
 
-from .conv import ConvNormAct, DwConvNormAct
+from .conv import ConvNormAct, DWConvNormAct
 
 
 class Bottleneck(nn.Cell):
@@ -77,13 +77,13 @@ class C2f(nn.Cell):
         return self.cv2(ops.concat(y, axis=1))
 
 
-class DwBottleneck(nn.Cell):
+class DWBottleneck(nn.Cell):
     # depthwise bottleneck used in yolox nano scale
     def __init__(self, c1, c2, shortcut=True, k=(1, 3), e=0.5, act=True, momentum=0.97, eps=1e-3, sync_bn=False):  # ch_in, ch_out, shortcut, groups, kernels, expand
         super().__init__()
         c_ = int(c2 * e)  # hidden channels
         self.conv1 = ConvNormAct(c1, c_, k[0], 1, act=True, momentum=momentum, eps=eps, sync_bn=sync_bn)
-        self.conv2 = DwConvNormAct(c_, c2, k[1], 1, act=True, momentum=momentum, eps=eps, sync_bn=sync_bn)
+        self.conv2 = DWConvNormAct(c_, c2, k[1], 1, act=True, momentum=momentum, eps=eps, sync_bn=sync_bn)
         self.add = shortcut and c1 == c2
 
     def construct(self, x):
@@ -94,16 +94,16 @@ class DwBottleneck(nn.Cell):
         return out
 
 
-class DwC3(nn.Cell):
+class DWC3(nn.Cell):
     # depthwise DwC3 used in yolox nano scale, similar as C3
     def __init__(self, c1, c2, n=1, shortcut=True, e=0.5, momentum=0.97, eps=1e-3, sync_bn=False):
-        super(DwC3, self).__init__()
+        super(DWC3, self).__init__()
         c_ = int(c2 * e)  # hidden channels
         self.conv1 = ConvNormAct(c1, c_, 1, 1, momentum=momentum, eps=eps, sync_bn=sync_bn)
         self.conv2 = ConvNormAct(c1, c_, 1, 1, momentum=momentum, eps=eps, sync_bn=sync_bn)
         self.conv3 = ConvNormAct(2 * c_, c2, 1, momentum=momentum, eps=eps, sync_bn=sync_bn)  # act=FReLU(c2)
         self.m = nn.SequentialCell(
-            [DwBottleneck(c_, c_, shortcut, k=(1, 3), e=1.0, momentum=momentum, eps=eps, sync_bn=sync_bn) for _ in range(n)])
+            [DWBottleneck(c_, c_, shortcut, k=(1, 3), e=1.0, momentum=momentum, eps=eps, sync_bn=sync_bn) for _ in range(n)])
         self.concat = ops.Concat(axis=1)
 
     def construct(self, x):
