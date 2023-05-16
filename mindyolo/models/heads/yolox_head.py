@@ -7,11 +7,12 @@ from mindspore.common import initializer as init
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
-from mindyolo.models.layers.conv import ConvNormAct
+from mindyolo.models.layers.conv import ConvNormAct, DwConvNormAct
 
 
 class YOLOxHead(nn.Cell):
-    def __init__(self, nc=80, stride=(8, 16, 32), is_standard_backbone=True, ch=(256, 512, 1024),  act=True, sync_bn=False):
+    def __init__(self, nc=80, stride=(8, 16, 32), ch=(256, 512, 1024), is_standard_backbone=True, act=True,
+                 depth_wise=False, sync_bn=False):
         """
         YOlOx head
         Args:
@@ -34,15 +35,16 @@ class YOLOxHead(nn.Cell):
         self.obj_preds = nn.CellList()
 
         hidden_ch = ch[2]//4 if is_standard_backbone else 256
+        HeadCNA = DwConvNormAct if depth_wise else ConvNormAct
         for i in range(self.nl):  # three kind of resolution, 80, 40, 20
             self.stems.append(ConvNormAct(ch[i], hidden_ch, 1, act=act, sync_bn=sync_bn))
             self.cls_convs.append(nn.SequentialCell(
-                [ConvNormAct(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn),
-                 ConvNormAct(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn)]
+                [HeadCNA(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn),
+                 HeadCNA(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn)]
             ))
             self.reg_convs.append(nn.SequentialCell(
-                [ConvNormAct(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn),
-                 ConvNormAct(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn)]
+                [HeadCNA(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn),
+                 HeadCNA(hidden_ch, hidden_ch, 3, act=act, sync_bn=sync_bn)]
             ))
             self.cls_preds.append(nn.Conv2d(hidden_ch, self.nc, 1, pad_mode='pad', has_bias=True))
             self.reg_preds.append(nn.Conv2d(hidden_ch, 4, 1, pad_mode='pad', has_bias=True))

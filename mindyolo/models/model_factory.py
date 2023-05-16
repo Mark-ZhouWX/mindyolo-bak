@@ -94,7 +94,7 @@ def parse_model(d, ch, nc, sync_bn=False):  # model_dict, input_channels(3)
         logger.info('Parse model with Sync BN.')
     logger.info('')
     logger.info('network structure are as follows')
-    logger.info('%3s%18s%3s%10s  %-70s%-30s' % ('', 'from', 'n', 'params', 'module', 'arguments'))
+    logger.info('%3s%18s%3s%10s  %-70s%-40s' % ('', 'from', 'n', 'params', 'module', 'arguments'))
     anchors, reg_max = d.get('anchors', 1), d.get('reg_max', 16)
     stride, gd, gw = d.stride, d.depth_multiple, d.width_multiple
     na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
@@ -105,11 +105,25 @@ def parse_model(d, ch, nc, sync_bn=False):  # model_dict, input_channels(3)
     for i, (f, n, m, args) in enumerate(d.backbone + d.head):  # from, number, module, args
         kwargs = {}
         m = eval(m) if isinstance(m, str) else m  # eval strings
+
+        _args = []
         for j, a in enumerate(args):
-            try:
-                args[j] = eval(a) if isinstance(a, str) else a  # eval strings
-            except:
-                pass
+            if isinstance(a, str) and '=' in a:
+                _index = a.find('=')
+                k, v = a[:_index], a[_index+1:]
+                try:
+                    v = eval(v)
+                except:
+                    pass
+                kwargs[k] = v
+            else:
+                try:
+                    a = eval(a) if isinstance(a, str) else a
+                except:
+                    pass
+                _args += [a,]
+        args = _args
+
 
         n = max(round(n * gd), 1) if n > 1 else n  # depth gain
         if m in (nn.Conv2d, ConvNormAct, RepConv, DownC, SPPCSPC, SPPF, C3, C2f, Bottleneck, Residualblock, Focus):
@@ -146,7 +160,7 @@ def parse_model(d, ch, nc, sync_bn=False):  # model_dict, input_channels(3)
         np = sum([x.size for x in m_.get_parameters()])  # number params
         m_.i, m_.f, m_.type, m_.np = i, f, t, np  # attach index, 'from' index, type, number params
         layers_param.append((i, f, t, np))
-        logger.info('%3s%18s%3s%10.0f  %-70s%-30s' % (i, f, n, np, t, args))  # print
+        logger.info('%3s%18s%3s%10.0f  %-70s%-40s' % (i, f, n, np, t, args, kwargs))  # print
         save.extend(x % i for x in ([f] if isinstance(f, int) else f) if x != -1)  # append to savelist
         layers.append(m_)
         if i == 0:

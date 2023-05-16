@@ -155,3 +155,22 @@ class Focus(nn.Cell):
 
     def construct(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
         return self.conv(ops.concat([x[..., ::2, ::2], x[..., 1::2, ::2], x[..., ::2, 1::2], x[..., 1::2, 1::2]], 1))
+
+
+class DwConvNormAct(nn.Cell):
+    """Conv2d + BN + Act, depthwise ConvNormAct used in yolox nano scale, an approach to reduce parameter number
+        """
+    def __init__(self, c1, c2, k=1, s=1, p=None, d=1, act=True, momentum=0.97, eps=1e-3, sync_bn=False):  # ch_in, ch_out, kernel, stride, padding, groups
+        super(DwConvNormAct, self).__init__()
+        self.conv = nn.Conv2d(c1, c2, k, s,
+                              pad_mode="pad",
+                              padding=autopad(k, p, d),
+                              group=g,
+                              dilation=d,
+                              has_bias=False)
+
+        self.dconv = ConvNormAct(c1, c1, k, s, p, g=c1, d=d, act=act, momentum=momentum, eps=eps, sync_bn=sync_bn)
+        self.pconv = ConvNormAct(c1, c2, k=1, s=1, p=p, g=1, d=d, act=act, momentum=momentum, eps=eps, sync_bn=sync_bn)
+
+    def construct(self, x):
+        return self.pconv(self.dconv(x))
