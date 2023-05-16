@@ -98,6 +98,10 @@ class Trainer:
         loader = self.dataloader.create_dict_iterator(output_numpy=False, num_epochs=1)
         s_step_time = time.time()
         s_epoch_time = time.time()
+        if self.log_interval > self.steps_per_epoch:
+            logger.warning(f"log interval should be less than total steps of one epoch, "
+                           f"but got {self.log_interval} > {self.steps_per_epoch}, please check")
+            self.log_interval = self.steps_per_epoch
         for i, data in enumerate(loader):
             if i == 0:
                 logger.warning("The first epoch will be compiled for the graph, which may take a long time; "
@@ -172,6 +176,10 @@ class Trainer:
                     f"Epoch {cur_epoch}/{epochs}, epoch time: {(time.time() - s_epoch_time) / 60:.2f} min.")
                 s_step_time = time.time()
                 s_epoch_time = time.time()
+
+            # reset s_step_time every epoch
+            if cur_step == self.steps_per_epoch:
+                s_step_time = time.time()
 
         if enable_modelarts and ckpt_filelist_best:
             for p in ckpt_filelist_best:
